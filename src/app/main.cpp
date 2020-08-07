@@ -1,9 +1,10 @@
 #include <iostream>
-#include <Sample.h>
+#include <memory>
+#include <SampleLib.h>
 
-using sample::core::Sample;
 using std::cout;
 using std::endl;
+using std::unique_ptr;
 
 int main(int argc, const char *argv[])
 {
@@ -13,7 +14,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    Sample world(argv[1]);
-    cout << "Hello, " << world.get_name() << "!" << endl;
-    return 1;
+    unique_ptr<void, void(*)(void*)> p(SampleInit(argv[1]), &SampleDestroy);
+    cout << "Hello, " << SampleGetName(p.get()) << "!" << endl;
+    return 0;
 }

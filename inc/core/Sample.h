@@ -1,5 +1,5 @@
-#ifndef SAMPLE_INC_SAMPLE_H
-#define SAMPLE_INC_SAMPLE_H
+#ifndef SAMPLE_INC_CORE_SAMPLE_H
+#define SAMPLE_INC_CORE_SAMPLE_H
 
 #include <string>
 
