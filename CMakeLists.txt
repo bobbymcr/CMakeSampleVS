@@ -36,6 +36,10 @@ target_link_libraries(sample-lib
     sample-core
 )
 
+set_property(TARGET sample-lib
+    PROPERTY PREFIX ""
+)
+
 add_executable(sample-app
     src/app/main.cpp
 )
