@@ -45,7 +45,7 @@ target_link_libraries(sample-app
 )
 
 add_executable(sample-test
-    test/SampleTest.cpp
+    test/core/SampleTest.cpp
 )
 
 target_link_libraries(sample-test
