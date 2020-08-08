@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <_ProjectDir>$(MSBuildProjectDirectory)\</_ProjectDir>
+    <_RelativeDir>$(_ProjectDir.Substring($(MSBuildThisFileDirectory.Length)))\</_RelativeDir>
+    <_RootDir>$(MSBuildThisFileDirectory)out\</_RootDir>
+    <BaseIntermediateOutputPath>$(_RootDir)obj\$(_RelativeDir)_$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)$(Configuration)\</IntermediateOutputPath>
+    <BaseOutputPath>$(_RootDir)build\</BaseOutputPath>
+    <_OutPrefix>Linux-Clang</_OutPrefix>
+    <_OutPrefix Condition="'$(OS)' == 'Windows_NT'">x64</_OutPrefix>
+    <_OutSuffix>$(Configuration)</_OutSuffix>
+    <_OutSuffix Condition="'$(_OutSuffix)' == ''">Debug</_OutSuffix>
+    <OutDir>$(BaseOutputPath)$(_OutPrefix)-$(_OutSuffix)\</OutDir>
+  </PropertyGroup>
+</Project>
