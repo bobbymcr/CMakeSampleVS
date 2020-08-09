@@ -12,16 +12,20 @@ if NOT EXIST "%VCPKG_FILE%" set ERR_MSG=Could not find vcpkg.& goto :Quit
 set /p VCPKG_PATH=<%VCPKG_FILE%
 
 set CLEAN=0
+set NO_CPP=0
+set NO_CS=0
 set NO_TEST=0
 set VERBOSE=0
 set BUILD_TYPE=Debug
-set ERR_MSG=Usage: %0 [--clean] [--no-test] [--verbose] [build_type]
+set ERR_MSG=Usage: %0 [--clean] [--no-cpp] [--no-cs] [--no-test] [--verbose] [build_type]
 
 :NextArg
 set NEXT_ARG=%~1
 shift
 if NOT DEFINED NEXT_ARG goto :EndArg
 if /i "%NEXT_ARG%" == "--clean" set CLEAN=1& goto :NextArg
+if /i "%NEXT_ARG%" == "--no-cpp" set NO_CPP=1& goto :NextArg
+if /i "%NEXT_ARG%" == "--no-cs" set NO_CS=1& goto :NextArg
 if /i "%NEXT_ARG%" == "--no-test" set NO_TEST=1& goto :NextArg
 if /i "%NEXT_ARG%" == "--verbose" set VERBOSE=1& goto :NextArg
 if "%NEXT_ARG:~0,1%" == "-" goto :Quit
@@ -34,22 +38,25 @@ goto :Quit
 set BUILD_CONFIG=%VSCMD_ARG_HOST_ARCH%-%BUILD_TYPE%
 echo == Build config '%BUILD_CONFIG%'
 
-if /i "%BUILD_TYPE%" == "Release" set BUILD_TYPE=RelWithDebInfo
+set BUILD_TYPE_CPP=%BUILD_TYPE%
+if /i "%BUILD_TYPE_CPP%" == "Release" set BUILD_TYPE_CPP=RelWithDebInfo
 
 set OUTPUT_PATH=%ROOT_PATH%\out
 set BUILD_PATH=%OUTPUT_PATH%\build\%BUILD_CONFIG%
 
-if "%CLEAN%" == "0" goto :Make
+if "%CLEAN%" == "0" goto :MakeCpp
 echo == Remove %BUILD_PATH%
 if EXIST "%BUILD_PATH%" rd /s /q "%BUILD_PATH%"
 
-:Make
+:MakeCpp
+if "%NO_CPP%" == "1" goto :MakeCS
+
 if NOT EXIST "%BUILD_PATH%" md "%BUILD_PATH%"
 cd "%BUILD_PATH%"
 
 set CMAKE_ARGS=^
   -G Ninja ^
-  -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
+  -DCMAKE_BUILD_TYPE=%BUILD_TYPE_CPP% ^
   -DCMAKE_CXX_COMPILER:FILEPATH=cl.exe ^
   -DCMAKE_INSTALL_PREFIX:PATH="%OUTPUT_PATH%\install\%BUILD_CONFIG%" ^
   -DCMAKE_MAKE_PROGRAM=ninja.exe ^
@@ -74,7 +81,7 @@ set EXIT_CODE=%ERRORLEVEL%
 set ERR_MSG=ninja.exe failed.
 if NOT "%EXIT_CODE%" == "0" goto :Quit
 
-if "%NO_TEST%" == "1" goto :Quit
+if "%NO_TEST%" == "1" goto :MakeCS
 
 set CTEST_ARGS=
 
@@ -82,8 +89,35 @@ if "%VERBOSE%" == "1" set CTEST_ARGS=%CTEST_ARGS% -V
 
 echo == ctest.exe %CTEST_ARGS%
 ctest.exe %CTEST_ARGS%
-set ERR_MSG=ctest.exe failed.
 set EXIT_CODE=%ERRORLEVEL%
+set ERR_MSG=ctest.exe failed.
+if NOT "%EXIT_CODE%" == "0" goto :Quit
+
+:MakeCS
+if "%NO_CS%" == "1" goto :Quit
+
+cd "%ROOT_PATH%"
+
+set DOTNET_BUILD_ARGS=build -c %BUILD_TYPE%
+
+if "%VERBOSE%" == "1" set DOTNET_BUILD_ARGS=%DOTNET_BUILD_ARGS% -v d
+
+echo == dotnet.exe %DOTNET_BUILD_ARGS%
+dotnet.exe %DOTNET_BUILD_ARGS%
+set EXIT_CODE=%ERRORLEVEL%
+set ERR_MSG=dotnet build failed.
+if NOT "%EXIT_CODE%" == "0" goto :Quit
+
+if "%NO_TEST%" == "1" goto :Quit
+
+set DOTNET_TEST_ARGS=test -c %BUILD_TYPE%
+
+if "%VERBOSE%" == "1" set DOTNET_TEST_ARGS=%DOTNET_TEST_ARGS% -v d
+
+echo == dotnet.exe %DOTNET_TEST_ARGS%
+dotnet.exe %DOTNET_TEST_ARGS%
+set EXIT_CODE=%ERRORLEVEL%
+set ERR_MSG=dotnet test failed.
 
 :Quit
 popd
